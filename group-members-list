@@ -1,4 +1,9 @@
+import argparse
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-c", "--customer", help="email of customer group whose members to list")
+parser.add_argument("-a", "--all", help="list members of all customer groups", action='store_true')
+args = parser.parse_args()
 
 import httplib2
 import sys
@@ -10,10 +15,9 @@ from oauth2client.file import Storage
 from oauth2client.client import AccessTokenRefreshError
 from oauth2client.client import OAuth2WebServerFlow
 
-
-client_id = sys.argv[1]
-client_secret = sys.argv[2]
-group_key = sys.argv[3]
+client_id = "<insert your client id here>"
+client_secret = "<insert your client secret here>"
+group_key = args.customer
 
 # The scope URL
 scope = 'https://www.googleapis.com/auth/admin.directory.group'
@@ -23,8 +27,8 @@ scope = 'https://www.googleapis.com/auth/admin.directory.group'
 # credentials.
 flow = OAuth2WebServerFlow(client_id, client_secret, scope)
 
-def main():
 
+def main():
     # Create a Storage object. This object holds the credentials that your
     # application needs to authorize access to the user's data. The name of the
     # credentials file is provided. If the file does not exist, it is
@@ -53,29 +57,49 @@ def main():
     http = credentials.authorize(http)
 
     # The apiclient.discovery.build() function returns an instance of an API service
-    # object can be used to make API calls. The object is constructed with
-    # methods specific to the calendar API. The arguments provided are:
-    #   name of the API ('calendar')
-    #   version of the API you are using ('v3')
+    # object that can be used to make API calls. The object is constructed with
+    # methods specific to the admin API. The arguments provided are:
+    #   name of the API ('admin')
+    #   version of the API you are using ('v1')
     #   authorized httplib2.Http() object that can be used for API calls
-    #service = build('calendar', 'v3', http=http)
     service = build('admin', 'directory_v1', http=http)
 
-    request = service.members().list(groupKey=group_key)
-
-    # The execute() function on the HttpRequest object actually calls the API.
-    # It returns a Python object built from the JSON response. You can print this
-    # object or refer to the Books API documentation to determine its structure.
-    response = request.execute()
-    #pprint.pprint(response)
-
-    # # Print out the list of groups
-    if response and 'members' in response:
-         instances = response['members']
-         for instance in instances:
-             print instance['email']
+    # if -a/all argument was used
+    if args.all == True:
+        secondary_request = service.groups().list(domain='<insert your domain here>')
+        secondary_response = secondary_request.execute()
+        if secondary_response and 'groups' in secondary_response:
+            secondary_instances = secondary_response['groups']
+            for secondary_instance in secondary_instances:
+                print secondary_instance['name'] + ' (' + secondary_instance['email'] + ')' + ' has the following members: \n'
+                request = service.members().list(groupKey=secondary_instance['email'])
+                response = request.execute()
+                if response and 'members' in response:
+                    instances = response['members']
+                    for instance in instances:
+                        print instance['email']
+                    print '\n'
+                else:
+                    print 'There are no members to list in this group.'
+        else:
+            print 'There are no groups to list in this domain.'
     else:
-         print 'There are no members to list in this group.'
+        request = service.members().list(groupKey=group_key)
+
+        # The execute() function on the HttpRequest object actually calls the API.
+        # It returns a Python object built from the JSON response. You can print this
+        # object or refer to the Books API documentation to determine its structure.
+        response = request.execute()
+        # pprint.pprint(response)
+
+        # Print out the member emails of specified group
+        if response and 'members' in response:
+            instances = response['members']
+            for instance in instances:
+                print instance['email']
+        else:
+            print
+            'There are no members to list in this group.'
 
 if __name__ == '__main__':
     main()
