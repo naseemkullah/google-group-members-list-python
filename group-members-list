@@ -2,8 +2,12 @@
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-c", "--customer", help="email of customer group whose members to list")
 parser.add_argument("-a", "--all", help="list members of all customer groups", action='store_true')
+parser.add_argument("-c", "--customer", help="email of customer group whose members to list")
+parser.add_argument("-d", "--domain", help="Domain name to display resources for")
+parser.add_argument("-cf", "--credentials-file", help="Credentials file to use for authorization")
+parser.add_argument("--client-id", help="Google Client ID for authorization. May also be specified with CLIENT_ID environment variable")
+parser.add_argument("--client-secret", help="Google Client Secret for authorization. May also be specified with CLIENT_SECRET environment variable")
 args = parser.parse_args()
 
 import httplib2
@@ -15,18 +19,29 @@ from oauth2client import tools
 from oauth2client.file import Storage
 from oauth2client.client import AccessTokenRefreshError
 from oauth2client.client import OAuth2WebServerFlow
+from oauth2client.client import flow_from_clientsecrets
 
-client_id = "<insert your client id here>"
-client_secret = "<insert your client secret here>"
+client_id = False # Insert id here if you want to hard code it
+client_secret = False # Insert secret here if you want to hard code it
+if args.client_id:
+    client_id = args.client_id
+if args.client_secret:
+    client_secret = args.client_secret
 group_key = args.customer
 
 # The scope URL
 scope = 'https://www.googleapis.com/auth/admin.directory.group'
 
+
+# Check that we have some sort of authorization
+
 # Create a flow object. This object holds the client_id, client_secret, and
 # scope. It assists with OAuth 2.0 steps to get user authorization and
 # credentials.
-flow = OAuth2WebServerFlow(client_id, client_secret, scope)
+if args.credentials_file:
+    flow_from_clientsecrets(args.credentials_file, scope)
+elsif client_id and client_secret:
+    flow = OAuth2WebServerFlow(client_id, client_secret, scope)
 
 
 def main():
