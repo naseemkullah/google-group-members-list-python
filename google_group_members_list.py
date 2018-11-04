@@ -40,7 +40,7 @@ scope = 'https://www.googleapis.com/auth/admin.directory.group'
 # credentials.
 if args.credentials_file:
     flow_from_clientsecrets(args.credentials_file, scope)
-elsif client_id and client_secret:
+elif client_id and client_secret:
     flow = OAuth2WebServerFlow(client_id, client_secret, scope)
 
 
@@ -87,18 +87,18 @@ def main():
         if secondary_response and 'groups' in secondary_response:
             secondary_instances = secondary_response['groups']
             for secondary_instance in secondary_instances:
-                print secondary_instance['name'] + ' (' + secondary_instance['email'] + ')' + ' has the following members: \n'
+                print(secondary_instance['name'] + ' (' + secondary_instance['email'] + ')' + ' has the following members: \n')
                 request = service.members().list(groupKey=secondary_instance['email'])
                 response = request.execute()
                 if response and 'members' in response:
                     instances = response['members']
                     for instance in instances:
-                        print instance['email']
-                    print '\n'
+                        print(instance['email'])
+                    print('\n')
                 else:
-                    print 'There are no members to list in this group.'
+                    print('There are no members to list in this group.')
         else:
-            print 'There are no groups to list in this domain.'
+            print('There are no groups to list in this domain.')
     else:
         request = service.members().list(groupKey=group_key)
 
@@ -112,7 +112,7 @@ def main():
         if response and 'members' in response:
             instances = response['members']
             for instance in instances:
-                print instance['email']
+                print(instance['email'])
         else:
             print
             'There are no members to list in this group.'
